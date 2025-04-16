@@ -8,13 +8,14 @@ local Linux = {
     Theme = {
         Background = Color3.fromRGB(18, 18, 18),
         Element = Color3.fromRGB(22, 22, 22),
-        Accent = Color3.fromRGB(70, 130, 180),
+        Accent = Color3.fromRGB(147, 112, 219),
         Text = Color3.fromRGB(180, 180, 180),
         Toggle = Color3.fromRGB(40, 40, 40),
         TabInactive = Color3.fromRGB(25, 25, 25),
         DropdownOption = Color3.fromRGB(25, 25, 25),
-        SelectedOption = Color3.fromRGB(255, 215, 0),
-        TextBox = Color3.fromRGB(28, 28, 28)
+        SelectedOption = Color3.fromRGB(255, 255, 255),
+        TextBox = Color3.fromRGB(28, 28, 28),
+        ContainerOutline = Color3.fromRGB(50, 50, 50)
     }
 }
 
@@ -314,11 +315,11 @@ function Linux.Create(config)
             MinimizeIcon.Image = "rbxassetid://10734895698"
             isMinimized = false
         end
-    end)
+    })
 
     CloseButton.MouseButton1Click:Connect(function()
         LinuxUI:Destroy()
-    end)
+    })
 
     InputService.InputBegan:Connect(function(input)
         if input.KeyCode == Enum.KeyCode.LeftAlt then
@@ -363,16 +364,8 @@ function Linux.Create(config)
             Position = UDim2.new(0, 0, 0.1, 0),
             ZIndex = 2,
             BorderSizePixel = 0,
-            ClipsDescendants = false
-        })
-
-        local Gradient = Linux.Instance("UIGradient", {
-            Parent = TabSeperator,
-            Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 130, 180)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 105, 180))
-            }),
-            Rotation = 45
+            ClipsDescendants = false,
+            BackgroundColor3 = Linux.Theme.Accent
         })
 
         Linux.Instance("UICorner", {
@@ -406,13 +399,10 @@ function Linux.Create(config)
             ZIndex = 2
         })
 
-        local TabContent = Linux.Instance("ScrollingFrame", {
+        local TabContent = Linux.Instance("Frame", {
             Parent = Content,
             BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 1, 0),
-            CanvasSize = UDim2.new(0, 0, 0, 0),
-            AutomaticCanvasSize = Enum.AutomaticSize.Y,
-            ScrollBarThickness = 0,
             Visible = false,
             ZIndex = 1,
             BorderSizePixel = 1,
@@ -443,34 +433,67 @@ function Linux.Create(config)
             ZIndex = 4
         })
 
-        local ElementContainer = Linux.Instance("Frame", {
+        local Container1 = Linux.Instance("ScrollingFrame", {
             Parent = TabContent,
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 1, -30),
-            Position = UDim2.new(0, 0, 0, 30),
+            Size = UDim2.new(0.48, -5, 1, -35),
+            Position = UDim2.new(0, 5, 0, 35),
+            CanvasSize = UDim2.new(0, 0, 0, 0),
+            AutomaticCanvasSize = Enum.AutomaticSize.Y,
+            ScrollBarThickness = 4,
+            ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100),
             ZIndex = 1,
             BorderSizePixel = 1,
-            BorderColor3 = Color3.fromRGB(50, 50, 50)
+            BorderColor3 = Linux.Theme.ContainerOutline
         })
 
         Linux.Instance("UIListLayout", {
-            Parent = ElementContainer,
+            Parent = Container1,
             Padding = UDim.new(0, 4),
             HorizontalAlignment = Enum.HorizontalAlignment.Left,
             SortOrder = Enum.SortOrder.LayoutOrder
         })
 
         Linux.Instance("UIPadding", {
-            Parent = ElementContainer,
+            Parent = Container1,
+            PaddingLeft = UDim.new(0, 5),
+            PaddingTop = UDim.new(0, 5)
+        })
+
+        local Container2 = Linux.Instance("ScrollingFrame", {
+            Parent = TabContent,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(0.48, -5, 1, -35),
+            Position = UDim2.new(0.52, 0, 0, 35),
+            CanvasSize = UDim2.new(0, 0, 0, 0),
+            AutomaticCanvasSize = Enum.AutomaticSize.Y,
+            ScrollBarThickness = 4,
+            ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100),
+            ZIndex = 1,
+            BorderSizePixel = 1,
+            BorderColor3 = Linux.Theme.ContainerOutline
+        })
+
+        Linux.Instance("UIListLayout", {
+            Parent = Container2,
+            Padding = UDim.new(0, 4),
+            HorizontalAlignment = Enum.HorizontalAlignment.Left,
+            SortOrder = Enum.SortOrder.LayoutOrder
+        })
+
+        Linux.Instance("UIPadding", {
+            Parent = Container2,
             PaddingLeft = UDim.new(0, 5),
             PaddingTop = UDim.new(0, 5)
         })
 
         local function AnimateTabTransition()
             local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            TweenService:Create(ElementContainer, tweenInfo, {Position = UDim2.new(1, 0, 0, 30)}):Play()
+            TweenService:Create(Container1, tweenInfo, {Position = UDim2.new(1, 0, 0, 35)}):Play()
+            TweenService:Create(Container2, tweenInfo, {Position = UDim2.new(1.52, 0, 0, 35)}):Play()
             task.wait(0.15)
-            TweenService:Create(ElementContainer, tweenInfo, {Position = UDim2.new(0, 0, 0, 30)}):Play()
+            TweenService:Create(Container1, tweenInfo, {Position = UDim2.new(0, 5, 0, 35)}):Play()
+            TweenService:Create(Container2, tweenInfo, {Position = UDim2.new(0.52, 0, 0, 35)}):Play()
         end
 
         local function SelectTab()
@@ -504,7 +527,9 @@ function Linux.Create(config)
             Text = TabText,
             Icon = TabIcon,
             Content = TabContent,
-            TitleFrame = TitleFrame
+            TitleFrame = TitleFrame,
+            Container1 = Container1,
+            Container2 = Container2
         }
 
         if tabOrder == 1 then
@@ -512,12 +537,20 @@ function Linux.Create(config)
         end
 
         local TabElements = {}
-        local elementOrder = 0
+        local elementOrder1 = 0
+        local elementOrder2 = 0
 
         function TabElements.Button(config)
-            elementOrder = elementOrder + 1
+            local container = config.Container == "Container2" and Container2 or Container1
+            local elementOrder = config.Container == "Container2" and elementOrder2 or elementOrder1
+            if config.Container == "Container2" then
+                elementOrder2 = elementOrder2 + 1
+            else
+                elementOrder1 = elementOrder1 + 1
+            end
+
             local BtnFrame = Linux.Instance("Frame", {
-                Parent = ElementContainer,
+                Parent = container,
                 BackgroundColor3 = Linux.Theme.Element,
                 BorderColor3 = Color3.fromRGB(50, 50, 50),
                 BorderSizePixel = 1,
@@ -592,9 +625,16 @@ function Linux.Create(config)
         end
 
         function TabElements.Toggle(config)
-            elementOrder = elementOrder + 1
+            local container = config.Container == "Container2" and Container2 or Container1
+            local elementOrder = config.Container == "Container2" and elementOrder2 or elementOrder1
+            if config.Container == "Container2" then
+                elementOrder2 = elementOrder2 + 1
+            else
+                elementOrder1 = elementOrder1 + 1
+            end
+
             local Toggle = Linux.Instance("Frame", {
-                Parent = ElementContainer,
+                Parent = container,
                 BackgroundColor3 = Linux.Theme.Element,
                 BorderColor3 = Color3.fromRGB(50, 50, 50),
                 BorderSizePixel = 1,
@@ -639,16 +679,8 @@ function Linux.Create(config)
                 Parent = ToggleBox,
                 Size = UDim2.new(0, 0, 1, 0),
                 ZIndex = 1,
-                BorderSizePixel = 0
-            })
-
-            local Gradient = Linux.Instance("UIGradient", {
-                Parent = ToggleFill,
-                Color = ColorSequence.new({
-                    ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 130, 180)),
-                    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 105, 180))
-                }),
-                Rotation = 45
+                BorderSizePixel = 0,
+                BackgroundColor3 = Linux.Theme.Accent
             })
 
             Linux.Instance("UICorner", {
@@ -698,9 +730,16 @@ function Linux.Create(config)
         end
 
         function TabElements.Dropdown(config)
-            elementOrder = elementOrder + 1
+            local container = config.Container == "Container2" and Container2 or Container1
+            local elementOrder = config.Container == "Container2" and elementOrder2 or elementOrder1
+            if config.Container == "Container2" then
+                elementOrder2 = elementOrder2 + 1
+            else
+                elementOrder1 = elementOrder1 + 1
+            end
+
             local Dropdown = Linux.Instance("Frame", {
-                Parent = ElementContainer,
+                Parent = container,
                 BackgroundColor3 = Linux.Theme.Element,
                 BorderColor3 = Color3.fromRGB(50, 50, 50),
                 BorderSizePixel = 1,
@@ -750,7 +789,7 @@ function Linux.Create(config)
             })
 
             local DropFrame = Linux.Instance("ScrollingFrame", {
-                Parent = ElementContainer,
+                Parent = container,
                 BackgroundColor3 = Color3.fromRGB(20, 20, 20),
                 BorderColor3 = Color3.fromRGB(50, 50, 50),
                 BorderSizePixel = 1,
@@ -802,8 +841,6 @@ function Linux.Create(config)
                     TweenService:Create(DropFrame, tween, {Size = UDim2.new(1, -5, 0, 0)}):Play()
                     TweenService:Create(Arrow, tween, {Rotation = 0}):Play()
                 end
-                task.wait(0.2)
-                TabContent.CanvasSize = UDim2.new(0, 0, 0, ElementContainer.AbsoluteSize.Y + ElementContainer:GetChildren()[1].AbsoluteContentSize.Y)
             end
 
             local function PopulateOptions()
@@ -822,7 +859,7 @@ function Linux.Create(config)
                             Size = UDim2.new(1, -5, 0, 25),
                             Font = Enum.Font.Gotham,
                             Text = tostring(opt),
-                            TextColor3 = opt == SelectedValue and Linux.Theme.SelectedOption or Linux.Theme.Text,
+                            TextColor3 = Linux.Theme.SelectedOption,
                             TextSize = 14,
                             TextXAlignment = Enum.TextXAlignment.Center,
                             ZIndex = 3,
@@ -839,7 +876,7 @@ function Linux.Create(config)
                             Selected.Text = tostring(opt)
                             for _, btn in pairs(DropFrame:GetChildren()) do
                                 if btn:IsA("TextButton") then
-                                    btn.TextColor3 = btn.Text == tostring(opt) and Linux.Theme.SelectedOption or Linux.Theme.Text
+                                    btn.TextColor3 = Linux.Theme.SelectedOption
                                 end
                             end
                             spawn(function() Linux:SafeCallback(config.Callback, opt) end)
@@ -858,7 +895,11 @@ function Linux.Create(config)
                     IsOpen = not IsOpen
                     PopulateOptions()
                     if IsOpen then
-                        elementOrder = elementOrder + 1
+                        if config.Container == "Container2" then
+                            elementOrder2 = elementOrder2 + 1
+                        else
+                            elementOrder1 = elementOrder1 + 1
+                        end
                     end
                 end
             end)
@@ -876,7 +917,7 @@ function Linux.Create(config)
                     Selected.Text = tostring(value)
                     for _, btn in pairs(DropFrame:GetChildren()) do
                         if btn:IsA("TextButton") then
-                            btn.TextColor3 = btn.Text == tostring(value) and Linux.Theme.SelectedOption or Linux.Theme.Text
+                            btn.TextColor3 = Linux.Theme.SelectedOption
                         end
                     end
                     spawn(function() Linux:SafeCallback(config.Callback, value) end)
@@ -892,9 +933,16 @@ function Linux.Create(config)
         end
 
         function TabElements.MultiDropdown(config)
-            elementOrder = elementOrder + 1
+            local container = config.Container == "Container2" and Container2 or Container1
+            local elementOrder = config.Container == "Container2" and elementOrder2 or elementOrder1
+            if config.Container == "Container2" then
+                elementOrder2 = elementOrder2 + 1
+            else
+                elementOrder1 = elementOrder1 + 1
+            end
+
             local MultiDropdown = Linux.Instance("Frame", {
-                Parent = ElementContainer,
+                Parent = container,
                 BackgroundColor3 = Linux.Theme.Element,
                 BorderColor3 = Color3.fromRGB(50, 50, 50),
                 BorderSizePixel = 1,
@@ -944,7 +992,7 @@ function Linux.Create(config)
             })
 
             local DropFrame = Linux.Instance("ScrollingFrame", {
-                Parent = ElementContainer,
+                Parent = container,
                 BackgroundColor3 = Color3.fromRGB(20, 20, 20),
                 BorderColor3 = Color3.fromRGB(50, 50, 50),
                 BorderSizePixel = 1,
@@ -996,8 +1044,6 @@ function Linux.Create(config)
                     TweenService:Create(DropFrame, tween, {Size = UDim2.new(1, -5, 0, 0)}):Play()
                     TweenService:Create(Arrow, tween, {Rotation = 0}):Play()
                 end
-                task.wait(0.2)
-                TabContent.CanvasSize = UDim2.new(0, 0, 0, ElementContainer.AbsoluteSize.Y + ElementContainer:GetChildren()[1].AbsoluteContentSize.Y)
             end
 
             local function UpdateSelectedText()
@@ -1024,7 +1070,7 @@ function Linux.Create(config)
                             Size = UDim2.new(1, -5, 0, 25),
                             Font = Enum.Font.Gotham,
                             Text = tostring(opt),
-                            TextColor3 = table.find(SelectedValues, opt) and Linux.Theme.SelectedOption or Linux.Theme.Text,
+                            TextColor3 = Linux.Theme.SelectedOption,
                             TextSize = 14,
                             TextXAlignment = Enum.TextXAlignment.Center,
                             ZIndex = 3,
@@ -1047,7 +1093,7 @@ function Linux.Create(config)
                             else
                                 table.insert(SelectedValues, opt)
                             end
-                            OptBtn.TextColor3 = table.find(SelectedValues, opt) and Linux.Theme.SelectedOption or Linux.Theme.Text
+                            OptBtn.TextColor3 = Linux.Theme.SelectedOption
                             UpdateSelectedText()
                             spawn(function() Linux:SafeCallback(config.Callback, SelectedValues) end)
                         end)
@@ -1065,7 +1111,11 @@ function Linux.Create(config)
                     IsOpen = not IsOpen
                     PopulateOptions()
                     if IsOpen then
-                        elementOrder = elementOrder + 1
+                        if config.Container == "Container2" then
+                            elementOrder2 = elementOrder2 + 1
+                        else
+                            elementOrder1 = elementOrder1 + 1
+                        end
                     end
                 end
             end)
@@ -1093,9 +1143,16 @@ function Linux.Create(config)
         end
 
         function TabElements.Slider(config)
-            elementOrder = elementOrder + 1
+            local container = config.Container == "Container2" and Container2 or Container1
+            local elementOrder = config.Container == "Container2" and elementOrder2 or elementOrder1
+            if config.Container == "Container2" then
+                elementOrder2 = elementOrder2 + 1
+            else
+                elementOrder1 = elementOrder1 + 1
+            end
+
             local Slider = Linux.Instance("Frame", {
-                Parent = ElementContainer,
+                Parent = container,
                 BackgroundColor3 = Linux.Theme.Element,
                 BorderColor3 = Color3.fromRGB(50, 50, 50),
                 BorderSizePixel = 1,
@@ -1156,16 +1213,8 @@ function Linux.Create(config)
                 Size = UDim2.new(0, 0, 1, 0),
                 Position = UDim2.new(0, 0, 0, 0),
                 ZIndex = 1,
-                BorderSizePixel = 0
-            })
-
-            local Gradient = Linux.Instance("UIGradient", {
-                Parent = FillBar,
-                Color = ColorSequence.new({
-                    ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 130, 180)),
-                    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 105, 180))
-                }),
-                Rotation = 45
+                BorderSizePixel = 0,
+                BackgroundColor3 = Linux.Theme.Accent
             })
 
             Linux.Instance("UICorner", {
@@ -1253,9 +1302,16 @@ function Linux.Create(config)
         end
 
         function TabElements.Input(config)
-            elementOrder = elementOrder + 1
+            local container = config.Container == "Container2" and Container2 or Container1
+            local elementOrder = config.Container == "Container2" and elementOrder2 or elementOrder1
+            if config.Container == "Container2" then
+                elementOrder2 = elementOrder2 + 1
+            else
+                elementOrder1 = elementOrder1 + 1
+            end
+
             local Input = Linux.Instance("Frame", {
-                Parent = ElementContainer,
+                Parent = container,
                 BackgroundColor3 = Linux.Theme.Element,
                 BorderColor3 = Color3.fromRGB(50, 50, 50),
                 BorderSizePixel = 1,
@@ -1352,9 +1408,16 @@ function Linux.Create(config)
         end
 
         function TabElements.Label(config)
-            elementOrder = elementOrder + 1
+            local container = config.Container == "Container2" and Container2 or Container1
+            local elementOrder = config.Container == "Container2" and elementOrder2 or elementOrder1
+            if config.Container == "Container2" then
+                elementOrder2 = elementOrder2 + 1
+            else
+                elementOrder1 = elementOrder1 + 1
+            end
+
             local LabelFrame = Linux.Instance("Frame", {
-                Parent = ElementContainer,
+                Parent = container,
                 BackgroundColor3 = Linux.Theme.Element,
                 BorderColor3 = Color3.fromRGB(50, 50, 50),
                 BorderSizePixel = 1,
@@ -1428,9 +1491,16 @@ function Linux.Create(config)
         end
 
         function TabElements.Section(config)
-            elementOrder = elementOrder + 1
+            local container = config.Container == "Container2" and Container2 or Container1
+            local elementOrder = config.Container == "Container2" and elementOrder2 or elementOrder1
+            if config.Container == "Container2" then
+                elementOrder2 = elementOrder2 + 1
+            else
+                elementOrder1 = elementOrder1 + 1
+            end
+
             local Section = Linux.Instance("Frame", {
-                Parent = ElementContainer,
+                Parent = container,
                 BackgroundTransparency = 1,
                 Size = UDim2.new(1, -5, 0, 24),
                 ZIndex = 1,
@@ -1455,9 +1525,16 @@ function Linux.Create(config)
         end
 
         function TabElements.Keybind(config)
-            elementOrder = elementOrder + 1
+            local container = config.Container == "Container2" and Container2 or Container1
+            local elementOrder = config.Container == "Container2" and elementOrder2 or elementOrder1
+            if config.Container == "Container2" then
+                elementOrder2 = elementOrder2 + 1
+            else
+                elementOrder1 = elementOrder1 + 1
+            end
+
             local Keybind = Linux.Instance("Frame", {
-                Parent = ElementContainer,
+                Parent = container,
                 BackgroundColor3 = Linux.Theme.Element,
                 BorderColor3 = Color3.fromRGB(50, 50, 50),
                 BorderSizePixel = 1,
@@ -1621,9 +1698,16 @@ function Linux.Create(config)
         end
 
         function TabElements.Paragraph(config)
-            elementOrder = elementOrder + 1
+            local container = config.Container == "Container2" and Container2 or Container1
+            local elementOrder = config.Container == "Container2" and elementOrder2 or elementOrder1
+            if config.Container == "Container2" then
+                elementOrder2 = elementOrder2 + 1
+            else
+                elementOrder1 = elementOrder1 + 1
+            end
+
             local ParagraphFrame = Linux.Instance("Frame", {
-                Parent = ElementContainer,
+                Parent = container,
                 BackgroundColor3 = Linux.Theme.Element,
                 BorderColor3 = Color3.fromRGB(50, 50, 50),
                 BorderSizePixel = 1,
@@ -1687,9 +1771,16 @@ function Linux.Create(config)
         end
 
         function TabElements.Notification(config)
-            elementOrder = elementOrder + 1
+            local container = config.Container == "Container2" and Container2 or Container1
+            local elementOrder = config.Container == "Container2" and elementOrder2 or elementOrder1
+            if config.Container == "Container2" then
+                elementOrder2 = elementOrder2 + 1
+            else
+                elementOrder1 = elementOrder1 + 1
+            end
+
             local NotificationFrame = Linux.Instance("Frame", {
-                Parent = ElementContainer,
+                Parent = container,
                 BackgroundColor3 = Linux.Theme.Element,
                 BorderColor3 = Color3.fromRGB(50, 50, 50),
                 BorderSizePixel = 1,
