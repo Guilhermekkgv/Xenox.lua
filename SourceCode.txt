@@ -1,0 +1,634 @@
+local Linux = {}
+Linux.__index = Linux
+
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+function Linux.Create(config)
+    local self = setmetatable({}, Linux)
+    
+    self.ScreenGui = Instance.new("ScreenGui")
+    self.ScreenGui.IgnoreGuiInset = true
+    self.ScreenGui.Parent = game.Players.LocalPlayer.PlayerGui
+    
+    self.MainFrame = Instance.new("Frame")
+    self.MainFrame.Size = config.SizePC or UDim2.fromOffset(500, 350)
+    self.MainFrame.Position = UDim2.fromScale(0.5, 0.5)
+    self.MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    self.MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    self.MainFrame.BorderSizePixel = 0
+    self.MainFrame.Parent = self.ScreenGui
+    
+    self.TopBar = Instance.new("Frame")
+    self.TopBar.Size = UDim2.new(1, 0, 0, 40)
+    self.TopBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    self.TopBar.BorderSizePixel = 0
+    self.TopBar.Parent = self.MainFrame
+    
+    self.Title = Instance.new("TextLabel")
+    self.Title.Size = UDim2.new(0.5, 0, 0, 20)
+    self.Title.Position = UDim2.new(0, 10, 0, 2)
+    self.Title.BackgroundTransparency = 1
+    self.Title.Text = config.Name or "UI"
+    self.Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    self.Title.TextSize = 16
+    self.Title.Font = Enum.Font.SourceSansBold
+    self.Title.TextXAlignment = Enum.TextXAlignment.Left
+    self.Title.Parent = self.TopBar
+    
+    self.Subtitle = Instance.new("TextLabel")
+    self.Subtitle.Size = UDim2.new(0.5, 0, 0, 15)
+    self.Subtitle.Position = UDim2.new(0, 10, 0, 22)
+    self.Subtitle.BackgroundTransparency = 1
+    self.Subtitle.Text = config.Subtitle or ""
+    self.Subtitle.TextColor3 = Color3.fromRGB(150, 150, 150)
+    self.Subtitle.TextSize = 12
+    self.Subtitle.Font = Enum.Font.SourceSans
+    self.Subtitle.TextXAlignment = Enum.TextXAlignment.Left
+    self.Subtitle.Parent = self.TopBar
+    
+    self.TabsFrame = Instance.new("Frame")
+    self.TabsFrame.Size = UDim2.new(0, config.TabWidth or 125, 1, -40)
+    self.TabsFrame.Position = UDim2.new(0, 0, 0, 40)
+    self.TabsFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    self.TabsFrame.BorderSizePixel = 0
+    self.TabsFrame.Parent = self.MainFrame
+    
+    self.TabsList = Instance.new("UIListLayout")
+    self.TabsList.SortOrder = Enum.SortOrder.LayoutOrder
+    self.TabsList.Parent = self.TabsFrame
+    
+    self.ContentFrame = Instance.new("Frame")
+    self.ContentFrame.Size = UDim2.new(1, -self.TabsFrame.Size.X.Offset, 1, -40)
+    self.ContentFrame.Position = UDim2.new(0, self.TabsFrame.Size.X.Offset, 0, 40)
+    self.ContentFrame.BackgroundTransparency = 1
+    self.ContentFrame.Parent = self.MainFrame
+    
+    self.Tabs = {}
+    self.ActiveTab = nil
+    
+    if UserInputService.TouchEnabled then
+        self.MainFrame.Size = config.SizeMobile or UDim2.fromOffset(450, 300)
+    end
+    
+    self:MakeDraggable()
+    
+    return self
+end
+
+function Linux:MakeDraggable()
+    local dragging
+    local dragInput
+    local dragStart
+    local startPos
+    
+    self.TopBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = self.MainFrame.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    
+    self.TopBar.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    
+    RunService:BindToRenderStep("Drag", 1, function()
+        if dragging and dragInput then
+            local delta = dragInput.Position - dragStart
+            self.MainFrame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
+
+function Linux:Tab(config)
+    local tab = {}
+    
+    tab.Button = Instance.new("TextButton")
+    tab.Button.Size = UDim2.new(1, 0, 0, 40)
+    tab.Button.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    tab.Button.BorderSizePixel = 0
+    tab.Button.Text = config.Name or "Tab"
+    tab.Button.TextColor3 = Color3.fromRGB(150, 150, 150)
+    tab.Button.TextSize = 14
+    tab.Button.Font = Enum.Font.SourceSans
+    tab.Button.Parent = self.TabsFrame
+    
+    if config.Icon and config.Icon.Enabled then
+        tab.Icon = Instance.new("ImageLabel")
+        tab.Icon.Size = UDim2.new(0, 20, 0, 20)
+        tab.Icon.Position = UDim2.new(0, 10, 0, 10)
+        tab.Icon.BackgroundTransparency = 1
+        tab.Icon.Image = config.Icon.Image or ""
+        tab.Icon.Parent = tab.Button
+        tab.Button.TextXAlignment = Enum.TextXAlignment.Left
+        tab.Button.Text = "  " .. tab.Button.Text
+    end
+    
+    tab.Content = Instance.new("ScrollingFrame")
+    tab.Content.Size = UDim2.new(1, 0, 1, 0)
+    tab.Content.BackgroundTransparency = 1
+    tab.Content.CanvasSize = UDim2.new(0, 0, 0, 0)
+    tab.Content.ScrollBarThickness = 4
+    tab.Content.Visible = false
+    tab.Content.Parent = self.ContentFrame
+    
+    tab.ListLayout = Instance.new("UIListLayout")
+    tab.ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    tab.ListLayout.Padding = UDim.new(0, 5)
+    tab.ListLayout.Parent = tab.Content
+    
+    tab.Button.MouseButton1Click:Connect(function()
+        if self.ActiveTab then
+            self.ActiveTab.Content.Visible = false
+            self.ActiveTab.Button.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+            self.ActiveTab.Button.TextColor3 = Color3.fromRGB(150, 150, 150)
+        end
+        tab.Content.Visible = true
+        tab.Button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        tab.Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+        self.ActiveTab = tab
+    end)
+    
+    if not self.ActiveTab then
+        self.ActiveTab = tab
+        tab.Content.Visible = true
+        tab.Button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        tab.Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    end
+    
+    function tab:Section(config)
+        local section = Instance.new("Frame")
+        section.Size = UDim2.new(1, -10, 0, 30)
+        section.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        section.BorderSizePixel = 0
+        section.Parent = tab.Content
+        
+        local title = Instance.new("TextLabel")
+        title.Size = UDim2.new(1, -10, 0, 20)
+        title.Position = UDim2.new(0, 5, 0, 5)
+        title.BackgroundTransparency = 1
+        title.Text = config.Name or "Section"
+        title.TextColor3 = Color3.fromRGB(200, 200, 200)
+        title.TextSize = 14
+        title.Font = Enum.Font.SourceSansBold
+        title.TextXAlignment = Enum.TextXAlignment.Left
+        title.Parent = section
+        
+        tab.Content.CanvasSize = UDim2.new(0, 0, 0, tab.ListLayout.AbsoluteContentSize.Y)
+    end
+    
+    function tab:Label(config)
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, -10, 0, 20)
+        label.BackgroundTransparency = 1
+        label.Text = config.Text or "Label"
+        label.TextColor3 = Color3.fromRGB(200, 200, 200)
+        label.TextSize = 14
+        label.Font = Enum.Font.SourceSans
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = tab.Content
+        
+        tab.Content.CanvasSize = UDim2.new(0, 0, 0, tab.ListLayout.AbsoluteContentSize.Y)
+    end
+    
+    function tab:Button(config)
+        local button = Instance.new("TextButton")
+        button.Size = UDim2.new(1, -10, 0, 30)
+        button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        button.BorderSizePixel = 0
+        button.Text = config.Name or "Button"
+        button.TextColor3 = Color3.fromRGB(255, 255, 255)
+        button.TextSize = 14
+        button.Font = Enum.Font.SourceSans
+        button.Parent = tab.Content
+        
+        button.MouseButton1Click:Connect(function()
+            if config.Callback then
+                config.Callback()
+            end
+        end)
+        
+        tab.Content.CanvasSize = UDim2.new(0, 0, 0, tab.ListLayout.AbsoluteContentSize.Y)
+    end
+    
+    function tab:Toggle(config)
+        local toggle = Instance.new("Frame")
+        toggle.Size = UDim2.new(1, -10, 0, 30)
+        toggle.BackgroundTransparency = 1
+        toggle.Parent = tab.Content
+        
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(0.8, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.Text = config.Name or "Toggle"
+        label.TextColor3 = Color3.fromRGB(200, 200, 200)
+        label.TextSize = 14
+        label.Font = Enum.Font.SourceSans
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = toggle
+        
+        local toggleButton = Instance.new("TextButton")
+        toggleButton.Size = UDim2.new(0, 30, 0, 15)
+        toggleButton.Position = UDim2.new(1, -30, 0.5, -7.5)
+        toggleButton.BackgroundColor3 = config.Default and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+        toggleButton.BorderSizePixel = 0
+        toggleButton.Text = ""
+        toggleButton.Parent = toggle
+        
+        toggleButton.MouseButton1Click:Connect(function()
+            config.Default = not config.Default
+            toggleButton.BackgroundColor3 = config.Default and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+            if config.Callback then
+                config.Callback(config.Default)
+            end
+        end)
+        
+        tab.Content.CanvasSize = UDim2.new(0, 0, 0, tab.ListLayout.AbsoluteContentSize.Y)
+    end
+    
+    function tab:Dropdown(config)
+        local dropdown = Instance.new("Frame")
+        dropdown.Size = UDim2.new(1, -10, 0, 30)
+        dropdown.BackgroundTransparency = 1
+        dropdown.Parent = tab.Content
+        
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(0.5, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.Text = config.Name or "Dropdown"
+        label.TextColor3 = Color3.fromRGB(200, 200, 200)
+        label.TextSize = 14
+        label.Font = Enum.Font.SourceSans
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = dropdown
+        
+        local button = Instance.new("TextButton")
+        button.Size = UDim2.new(0.5, 0, 0, 20)
+        button.Position = UDim2.new(0.5, 0, 0.5, -10)
+        button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        button.BorderSizePixel = 0
+        button.Text = config.Default or config.Options[1]
+        button.TextColor3 = Color3.fromRGB(255, 255, 255)
+        button.TextSize = 14
+        button.Font = Enum.Font.SourceSans
+        button.Parent = dropdown
+        
+        local optionsFrame = Instance.new("Frame")
+        optionsFrame.Size = UDim2.new(0.5, 0, 0, #config.Options * 20)
+        optionsFrame.Position = UDim2.new(0.5, 0, 1, 0)
+        optionsFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        optionsFrame.BorderSizePixel = 0
+        optionsFrame.Visible = false
+        optionsFrame.Parent = dropdown
+        
+        local optionsList = Instance.new("UIListLayout")
+        optionsList.SortOrder = Enum.SortOrder.LayoutOrder
+        optionsList.Parent = optionsFrame
+        
+        for _, option in ipairs(config.Options) do
+            local optButton = Instance.new("TextButton")
+            optButton.Size = UDim2.new(1, 0, 0, 20)
+            optButton.BackgroundTransparency = 1
+            optButton.Text = option
+            optButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            optButton.TextSize = 14
+            optButton.Font = Enum.Font.SourceSans
+            optButton.Parent = optionsFrame
+            
+            optButton.MouseButton1Click:Connect(function()
+                button.Text = option
+                optionsFrame.Visible = false
+                if config.Callback then
+                    config.Callback(option)
+                end
+            end)
+        end
+        
+        button.MouseButton1Click:Connect(function()
+            optionsFrame.Visible = not optionsFrame.Visible
+        end)
+        
+        tab.Content.CanvasSize = UDim2.new(0, 0, 0, tab.ListLayout.AbsoluteContentSize.Y)
+    end
+    
+    function tab:Slider(config)
+        local slider = Instance.new("Frame")
+        slider.Size = UDim2.new(1, -10, 0, 50)
+        slider.BackgroundTransparency = 1
+        slider.Parent = tab.Content
+        
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, 0, 0, 20)
+        label.BackgroundTransparency = 1
+        label.Text = config.Name or "Slider"
+        label.TextColor3 = Color3.fromRGB(200, 200, 200)
+        label.TextSize = 14
+        label.Font = Enum.Font.SourceSans
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = slider
+        
+        local sliderBar = Instance.new("Frame")
+        sliderBar.Size = UDim2.new(1, 0, 0, 10)
+        sliderBar.Position = UDim2.new(0, 0, 0, 30)
+        sliderBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        sliderBar.BorderSizePixel = 0
+        sliderBar.Parent = slider
+        
+        local fill = Instance.new("Frame")
+        fill.Size = UDim2.new((config.Default - config.Min) / (config.Max - config.Min), 0, 1, 0)
+        fill.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+        fill.BorderSizePixel = 0
+        fill.Parent = sliderBar
+        
+        local knob = Instance.new("Frame")
+        knob.Size = UDim2.new(0, 10, 0, 20)
+        knob.Position = UDim2.new((config.Default - config.Min) / (config.Max - config.Min), -5, 0, -5)
+        knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        knob.BorderSizePixel = 0
+        knob.Parent = sliderBar
+        
+        local dragging = false
+        knob.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = true
+            end
+        end)
+        
+        knob.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = false
+            end
+        end)
+        
+        RunService:BindToRenderStep("Slider" .. config.Name, 1, function()
+            if dragging then
+                local mousePos = UserInputService:GetMouseLocation()
+                local relative = (mousePos.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X
+                relative = math.clamp(relative, 0, 1)
+                local value = config.Min + (config.Max - config.Min) * relative
+                knob.Position = UDim2.new(relative, -5, 0, -5)
+                fill.Size = UDim2.new(relative, 0, 1, 0)
+                if config.Callback then
+                    config.Callback(math.floor(value))
+                end
+            end
+        end)
+        
+        tab.Content.CanvasSize = UDim2.new(0, 0, 0, tab.ListLayout.AbsoluteContentSize.Y)
+    end
+    
+    function tab:MultiDropdown(config)
+        local dropdown = Instance.new("Frame")
+        dropdown.Size = UDim2.new(1, -10, 0, 30)
+        dropdown.BackgroundTransparency = 1
+        dropdown.Parent = tab.Content
+        
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(0.5, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.Text = config.Name or "Multi Dropdown"
+        label.TextColor3 = Color3.fromRGB(200, 200, 200)
+        label.TextSize = 14
+        label.Font = Enum.Font.SourceSans
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = dropdown
+        
+        local button = Instance.new("TextButton")
+        button.Size = UDim2.new(0.5, 0, 0, 20)
+        button.Position = UDim2.new(0.5, 0, 0.5, -10)
+        button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        button.BorderSizePixel = 0
+        button.Text = table.concat(config.Default or {}, ", ")
+        button.TextColor3 = Color3.fromRGB(255, 255, 255)
+        button.TextSize = 14
+        button.Font = Enum.Font.SourceSans
+        button.Parent = dropdown
+        
+        local optionsFrame = Instance.new("Frame")
+        optionsFrame.Size = UDim2.new(0.5, 0, 0, #config.Options * 20)
+        optionsFrame.Position = UDim2.new(0.5, 0, 1, 0)
+        optionsFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        optionsFrame.BorderSizePixel = 0
+        optionsFrame.Visible = false
+        optionsFrame.Parent = dropdown
+        
+        local optionsList = Instance.new("UIListLayout")
+        optionsList.SortOrder = Enum.SortOrder.LayoutOrder
+        optionsList.Parent = optionsFrame
+        
+        local selected = config.Default or {}
+        for _, option in ipairs(config.Options) do
+            local optButton = Instance.new("TextButton")
+            optButton.Size = UDim2.new(1, 0, 0, 20)
+            optButton.BackgroundTransparency = 1
+            optButton.Text = option
+            optButton.TextColor3 = table.find(selected, option) and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 255, 255)
+            optButton.TextSize = 14
+            optButton.Font = Enum.Font.SourceSans
+            optButton.Parent = optionsFrame
+            
+            optButton.MouseButton1Click:Connect(function()
+                if table.find(selected, option) then
+                    table.remove(selected, table.find(selected, option))
+                else
+                    table.insert(selected, option)
+                end
+                optButton.TextColor3 = table.find(selected, option) and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 255, 255)
+                button.Text = table.concat(selected, ", ")
+                if config.Callback then
+                    config.Callback(selected)
+                end
+            end)
+        end
+        
+        button.MouseButton1Click:Connect(function()
+            optionsFrame.Visible = not optionsFrame.Visible
+        end)
+        
+        tab.Content.CanvasSize = UDim2.new(0, 0, 0, tab.ListLayout.AbsoluteContentSize.Y)
+    end
+    
+    function tab:Input(config)
+        local input = Instance.new("Frame")
+        input.Size = UDim2.new(1, -10, 0, 30)
+        input.BackgroundTransparency = 1
+        input.Parent = tab.Content
+        
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(0.5, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.Text = config.Name or "Input"
+        label.TextColor3 = Color3.fromRGB(200, 200, 200)
+        label.TextSize = 14
+        label.Font = Enum.Font.SourceSans
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = input
+        
+        local textBox = Instance.new("TextBox")
+        textBox.Size = UDim2.new(0.5, 0, 0, 20)
+        textBox.Position = UDim2.new(0.5, 0, 0.5, -10)
+        textBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        textBox.BorderSizePixel = 0
+        textBox.Text = config.Default or ""
+        textBox.PlaceholderText = config.Placeholder or "Enter text..."
+        textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+        textBox.TextSize = 14
+        textBox.Font = Enum.Font.SourceSans
+        textBox.Parent = input
+        
+        textBox.FocusLost:Connect(function(enterPressed)
+            if enterPressed and config.Callback then
+                config.Callback(textBox.Text)
+            end
+        end)
+        
+        tab.Content.CanvasSize = UDim2.new(0, 0, 0, tab.ListLayout.AbsoluteContentSize.Y)
+    end
+    
+    function tab:Keybind(config)
+        local keybind = Instance.new("Frame")
+        keybind.Size = UDim2.new(1, -10, 0, 30)
+        keybind.BackgroundTransparency = 1
+        keybind.Parent = tab.Content
+        
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(0.5, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.Text = config.Name or "Keybind"
+        label.TextColor3 = Color3.fromRGB(200, 200, 200)
+        label.TextSize = 14
+        label.Font = Enum.Font.SourceSans
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = keybind
+        
+        local button = Instance.new("TextButton")
+        button.Size = UDim2.new(0.5, 0, 0, 20)
+        button.Position = UDim2.new(0.5, 0, 0.5, -10)
+        button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        button.BorderSizePixel = 0
+        button.Text = config.Default.Name
+        button.TextColor3 = Color3.fromRGB(255, 255, 255)
+        button.TextSize = 14
+        button.Font = Enum.Font.SourceSans
+        button.Parent = keybind
+        
+        local waiting = false
+        button.MouseButton1Click:Connect(function()
+            waiting = true
+            button.Text = "..."
+        end)
+        
+        UserInputService.InputBegan:Connect(function(input)
+            if waiting and input.UserInputType == Enum.UserInputType.Keyboard then
+                waiting = false
+                config.Default = input.KeyCode
+                button.Text = input.KeyCode.Name
+            end
+        end)
+        
+        if config.Mode == "Toggle" then
+            local state = false
+            UserInputService.InputBegan:Connect(function(input)
+                if input.KeyCode == config.Default then
+                    state = not state
+                    if config.Callback then
+                        config.Callback(state)
+                    end
+                end
+            end)
+        end
+        
+        tab.Content.CanvasSize = UDim2.new(0, 0, 0, tab.ListLayout.AbsoluteContentSize.Y)
+    end
+    
+    function tab:Paragraph(config)
+        local paragraph = Instance.new("Frame")
+        paragraph.Size = UDim2.new(1, -10, 0, 60)
+        paragraph.BackgroundTransparency = 1
+        paragraph.Parent = tab.Content
+        
+        local title = Instance.new("TextLabel")
+        title.Size = UDim2.new(1, 0, 0, 20)
+        title.BackgroundTransparency = 1
+        title.Text = config.Title or "Paragraph"
+        title.TextColor3 = Color3.fromRGB(200, 200, 200)
+        title.TextSize = 14
+        title.Font = Enum.Font.SourceSansBold
+        title.TextXAlignment = Enum.TextXAlignment.Left
+        title.Parent = paragraph
+        
+        local content = Instance.new("TextLabel")
+        content.Size = UDim2.new(1, 0, 0, 40)
+        content.Position = UDim2.new(0, 0, 0, 20)
+        content.BackgroundTransparency = 1
+        content.Text = config.Content or ""
+        content.TextColor3 = Color3.fromRGB(150, 150, 150)
+        content.TextSize = 12
+        content.Font = Enum.Font.SourceSans
+        content.TextXAlignment = Enum.TextXAlignment.Left
+        content.TextWrapped = true
+        content.Parent = paragraph
+        
+        paragraph.Size = UDim2.new(1, -10, 0, content.TextBounds.Y + 25)
+        tab.Content.CanvasSize = UDim2.new(0, 0, 0, tab.ListLayout.AbsoluteContentSize.Y)
+    end
+    
+    table.insert(self.Tabs, tab)
+    return tab
+end
+
+function Linux:Notify(config)
+    local notification = Instance.new("Frame")
+    notification.Size = UDim2.new(0, 200, 0, 60)
+    notification.Position = UDim2.new(1, -210, 1, -70)
+    notification.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    notification.BorderSizePixel = 0
+    notification.Parent = self.ScreenGui
+    
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -10, 0, 20)
+    title.Position = UDim2.new(0, 5, 0, 5)
+    title.BackgroundTransparency = 1
+    title.Text = config.Title or "Notification"
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.TextSize = 14
+    title.Font = Enum.Font.SourceSansBold
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = notification
+    
+    local content = Instance.new("TextLabel")
+    content.Size = UDim2.new(1, -10, 0, 30)
+    content.Position = UDim2.new(0, 5, 0, 25)
+    content.BackgroundTransparency = 1
+    content.Text = config.Content or ""
+    content.TextColor3 = Color3.fromRGB(150, 150, 150)
+    content.TextSize = 12
+    content.Font = Enum.Font.SourceSans
+    content.TextXAlignment = Enum.TextXAlignment.Left
+    content.TextWrapped = true
+    content.Parent = notification
+    
+    local tween = TweenService:Create(notification, TweenInfo.new(config.Duration or 3), {Position = UDim2.new(1, 0, 1, -70)})
+    tween:Play()
+    tween.Completed:Connect(function()
+        notification:Destroy()
+    end)
+end
+
+return Linux
